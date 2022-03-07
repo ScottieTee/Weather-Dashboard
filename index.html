@@ -12,7 +12,24 @@
 </head>
 <body>
   
-    
+  <div id="header" class="jumbotron jumbotron-fluid text-container">
+      <h1 id="header-text"></h1>
+  </div>  
+
+  <div id="content-left" class="col-md-4">
+      <form>
+          <label for="search-city">Enter City</label>
+          <div class="form-row">
+              <input id="search-city" class="form-control" name="city" value="Charlotte"></input>
+              <button id="searchBtn" class="btn btn-primary" type="submit"></button>
+          </div>
+      </form>
+  </div>
+
+  <div id="content-right" class="col-md-9 pt-4">
+      <div id="current-weather"></div>
+      <div id="multi-day" class="mt-f"></div>
+  </div>
 
 
 
