@@ -34,6 +34,7 @@ var getCurrentWeather = function (event) {
         renderCities();
         getBackgroundImage();
         getFiveDayForecast(event);
+        getFiveDay(event)
         $('header-text').text(response.name);
         let currentHTML = `
             <h3>Current Conditions<img src="${currentWeatherIcon}"></h3>
@@ -51,4 +52,101 @@ var getCurrentWeather = function (event) {
             console.log("Current Weather API Error: try another city.");
             $('#search-error').text("City not found!");
         });
-} 
+        //five day forecast
+        var getFiveDay = function(event) {
+            fetch(apiUrl).done(function(response) {
+                let fiveDayHTML = `
+                <h2>5-Day Forecast</h2>
+                <div id="fiveDayForecastUl" class="d-inline-flex flex-wrap ">`;
+                for(let i = 0; i < response.list.length; i++) {
+                    let dayData = response.list[i];
+                    let dayTimeUTC = dayData.dt;
+                    let timeOffset = response.city.timezone;
+                    let timeOffsetHours = timeOffset; / 60 / 60;
+                    let thisMoment = moment.unix(dayTimeUTC).utc().utcOffset(timeOffsetHours);
+                    let iconURL = "https://openweathermap.org/img/w/" + dayData.weahter[0].icon + ".png";
+                    if (thisMoment.format("HH:mm:ss") === "11:00:00" || thisMoment.format("HH:mm:ss") === "12:00:00" || thisMoment.format("HH:mm:ss:") === "13:00:00") {
+                        fiveDayHTML += `
+                        <div class="weather-card card m-2 p0">
+                        <ul class="list-unstyled p-3">
+                        <li>${thisMoment.format("MM/DD/YY")}</li>
+                        <li class="weather-icon"><img src="${iconURL}"></li>
+                        <li>Temp: ${dayData.main.temp}&#8457;</li>
+                        <li>Humidity: ${dayData.main.humidity}%</li>
+                        </ul>
+                        </div>
+                        <br>`;
+                    }
+                };
+                fiveDayHTML += '</div>';
+                $('#five-day-forecast').html(fiveDayHTML);
+        })
+            .fail(function() {
+                console.log("Forecast API Error");
+            });
+}
+};
+
+var saveCity(newCity) {
+    let cityExists = false;
+    for (let i = 0; i < localStorage.length; i++) {
+        if (localStorage["cities" + i] === newCity) {
+            cityExists = true;
+            break;
+        }
+    }
+    if (cityExists === false) {
+        localStorage.setItem('cities' + localStorage.length, newCity);
+    }
+};
+
+var pullCities() {
+    $('#cities-results').empty();
+    if (localStorage.length === 0){
+        if (lastCity){
+            $('#search-city').attr("value", lastCity);
+        } else {
+            $('#search-city').attr("value", "Fort Worth");
+        }
+    } else {
+        let lastCityKey = "cities"+(localStorage.length-1);
+        lastCity = localStorage.getItem(lastCityKey);
+        $('#search-city').attr("value", lastCity);
+        for (let i = 0; i < localStorage.length; i++) {
+            let city = localStorage.getItem("cities" + i);
+            let cityEl;
+            if (currentCity===""){
+                currentCity=lastCity;
+            }
+            if (city === currentCity) {
+                cityEl = `<button type="button" class="list-group-item list-group-item-action active">${city}</button></li>`;
+            } else {
+                cityEl = `<button type="button" class="list-group-item list-group-item-action">${city}</button></li>`;
+            } 
+            $('#city-results').prepend(cityEl);
+        }
+        if (localStorage.length>0){
+            $('#clear-storage').html($('<a id="clear-storage" href="#">clear</a>'));
+        } else {
+            $('#clear-storage').html('');
+        }
+    }
+};
+
+$('#search-button').on("click", function (event) {
+    event.preventDefault();
+    currentCity = $('#search-city').val();
+    getCurrentWeather(event);
+});
+
+$('#city-results').on("click", function(event) {
+    event.preventDefault();
+    $('#search-city').val(event.target.textContent);
+    currentCity = $('#search-city').val();
+    getCurrentWeather(event);
+});
+
+$('#clear-storage').on("click", function(event){
+    localStorage.clear();
+    pullCities();
+}) 
