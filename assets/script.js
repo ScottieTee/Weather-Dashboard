@@ -2,8 +2,6 @@ let OwmApi = "7061a0d7994071a5b1a2eb70e8d0765f";
 var usApi = "R_fPrwXAPD_TNN3gw5mXZOhXQ52yQ8aPTLvMPRe3U4Q";
 let CurrentCity = "";
 let lastCity = "";
-var city = $('search-city').val();
-var apiURL = "https://api.openweathermap.org/data/2.5/weather?=" + city + "&units=imperial" + "&APPID=" + owmApi;
 
 
 // Use URLSearchParams to get URL parameters and check url for API key
@@ -16,6 +14,8 @@ var getUrlPar = function () {
 };
     //five day forecast
     var getFiveDay = function (event) {
+        var city = $('search-city').val();
+        var apiURL = "https://api.openweathermap.org/data/2.5/weather?=" + city + "&units=imperial" + "&APPID=" + owmApi;
         fetch(apiUrl).done(function (response) {
             let fiveDayHTML = `
                 <h2>5-Day Forecast</h2>
@@ -51,9 +51,16 @@ var getUrlPar = function () {
 
 //current weather
 var getCurrentWeather = function (event) {
-    currentCity = city;
+    let city = $('#search-city').val();
+    currentCity = $('#search-city').val();
     let longitude;
     let latitude;
+    var apiUrl = "https://api.openweathermap.org/data/2.5/weather?q=" + city + "&appid=" + owmApi;
+    let currentWeatherIcon = "https://openwathermap.org/img/w/" + response.weather[0].icon + ".png";
+    let UTCtime = response.dt;
+    let timeOffset = response.timezone;
+    let timeOffsetHours = timeOffset / 60 / 60;
+    let currentMoment = moment.unix(UTCtime).utc().utcOffset(timeOffsetHours);
     //let apiURL = "https://api.openweathermap.org/data/2.5/weather?=" + city + "&units=imperial"
     // + "&APPID=" + owmApi;
 
@@ -85,6 +92,7 @@ var getCurrentWeather = function (event) {
             $('#search-error').text("City not found!");
         }
     });
+};
 
 var saveCity = function(newCity) {
     let cityExists = false;
@@ -150,7 +158,7 @@ $('#clear-storage').on("click", function (event) {
     pullCities();
 });
 
-var runScript = function () {
+var runScript = function() {
     getUrlPar();
     pullCities();
     getCurrentWeather();
