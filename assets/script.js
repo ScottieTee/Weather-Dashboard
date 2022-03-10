@@ -8,10 +8,44 @@ var apiURL = "https://api.openweathermap.org/data/2.5/weather?=" + city + "&unit
 
 // Use URLSearchParams to get URL parameters and check url for API key
 // https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams
-var getUrlPar = function() {
+var getUrlPar = function () {
     let urlPar = new URLSearchParams(window.location.search);
     if (urlPar.has('key')) {
         owmApi = urlPar.get('key');
+    }
+};
+    //five day forecast
+    var getFiveDay = function (event) {
+        fetch(apiUrl).done(function (response) {
+            let fiveDayHTML = `
+                <h2>5-Day Forecast</h2>
+                <div id="fiveDayForecastUl" class="d-inline-flex flex-wrap ">`;
+            for (let i = 0; i < response.list.length; i++) {
+                let dayData = response.list[i];
+                let dayTimeUTC = dayData.dt;
+                let timeOffset = response.city.timezone;
+                let timeOffsetHours = timeOffset; / 60 / 60;
+                let thisMoment = moment.unix(dayTimeUTC).utc().utcOffset(timeOffsetHours);
+                let iconURL = "https://openweathermap.org/img/w/" + dayData.weahter[0].icon + ".png";
+                if (thisMoment.format("HH:mm:ss") === "11:00:00" || thisMoment.format("HH:mm:ss") === "12:00:00" || thisMoment.format("HH:mm:ss:") === "13:00:00") {
+                    fiveDayHTML += `
+                        <div class="weather-card card m-2 p0">
+                        <ul class="list-unstyled p-3">
+                        <li>${thisMoment.format("MM/DD/YY")}</li>
+                        <li class="weather-icon"><img src="${iconURL}"></li>
+                        <li>Temp: ${dayData.main.temp}&#8457;</li>
+                        <li>Humidity: ${dayData.main.humidity}%</li>
+                        </ul>
+                        </div>
+                        <br>`;
+                }
+            };
+            fiveDayHTML += '</div>';
+            $('#five-day-forecast').html(fiveDayHTML);
+        })
+            .fail(function () {
+                console.log("Forecast API Error");
+            });
     }
 };
 
@@ -23,10 +57,10 @@ var getCurrentWeather = function (event) {
     //let apiURL = "https://api.openweathermap.org/data/2.5/weather?=" + city + "&units=imperial"
     // + "&APPID=" + owmApi;
 
-     fetch(apiUrl).done(function(response) {
+    fetch(apiUrl).done(function (response) {
         saveCity(city);
         $('#search-error').text("");
-        currentWeatherIcon="https://openwathermap.org/img/w/" + response.weather[0].icon + ".png";
+        currentWeatherIcon = "https://openwathermap.org/img/w/" + response.weather[0].icon + ".png";
         let UTCtime = response.dt;
         let timeOffset = response.timezone;
         let timeOffsetHours = timeOffset / 60 / 60;
@@ -52,40 +86,6 @@ var getCurrentWeather = function (event) {
             console.log("Current Weather API Error: try another city.");
             $('#search-error').text("City not found!");
         });
-        //five day forecast
-        var getFiveDay = function(event) {
-            fetch(apiUrl).done(function(response) {
-                let fiveDayHTML = `
-                <h2>5-Day Forecast</h2>
-                <div id="fiveDayForecastUl" class="d-inline-flex flex-wrap ">`;
-                for(let i = 0; i < response.list.length; i++) {
-                    let dayData = response.list[i];
-                    let dayTimeUTC = dayData.dt;
-                    let timeOffset = response.city.timezone;
-                    let timeOffsetHours = timeOffset; / 60 / 60;
-                    let thisMoment = moment.unix(dayTimeUTC).utc().utcOffset(timeOffsetHours);
-                    let iconURL = "https://openweathermap.org/img/w/" + dayData.weahter[0].icon + ".png";
-                    if (thisMoment.format("HH:mm:ss") === "11:00:00" || thisMoment.format("HH:mm:ss") === "12:00:00" || thisMoment.format("HH:mm:ss:") === "13:00:00") {
-                        fiveDayHTML += `
-                        <div class="weather-card card m-2 p0">
-                        <ul class="list-unstyled p-3">
-                        <li>${thisMoment.format("MM/DD/YY")}</li>
-                        <li class="weather-icon"><img src="${iconURL}"></li>
-                        <li>Temp: ${dayData.main.temp}&#8457;</li>
-                        <li>Humidity: ${dayData.main.humidity}%</li>
-                        </ul>
-                        </div>
-                        <br>`;
-                    }
-                };
-                fiveDayHTML += '</div>';
-                $('#five-day-forecast').html(fiveDayHTML);
-        })
-            .fail(function() {
-                console.log("Forecast API Error");
-            });
-}
-};
 
 var saveCity(newCity) {
     let cityExists = false;
@@ -102,30 +102,30 @@ var saveCity(newCity) {
 
 var pullCities() {
     $('#cities-results').empty();
-    if (localStorage.length === 0){
-        if (lastCity){
+    if (localStorage.length === 0) {
+        if (lastCity) {
             $('#search-city').attr("value", lastCity);
         } else {
             $('#search-city').attr("value", "Fort Worth");
         }
     } else {
-        let lastCityKey = "cities"+(localStorage.length-1);
+        let lastCityKey = "cities" + (localStorage.length - 1);
         lastCity = localStorage.getItem(lastCityKey);
         $('#search-city').attr("value", lastCity);
         for (let i = 0; i < localStorage.length; i++) {
             let city = localStorage.getItem("cities" + i);
             let cityEl;
-            if (currentCity===""){
-                currentCity=lastCity;
+            if (currentCity === "") {
+                currentCity = lastCity;
             }
             if (city === currentCity) {
                 cityEl = `<button type="button" class="list-group-item list-group-item-action active">${city}</button></li>`;
             } else {
                 cityEl = `<button type="button" class="list-group-item list-group-item-action">${city}</button></li>`;
-            } 
+            }
             $('#city-results').prepend(cityEl);
         }
-        if (localStorage.length>0){
+        if (localStorage.length > 0) {
             $('#clear-storage').html($('<a id="clear-storage" href="#">clear</a>'));
         } else {
             $('#clear-storage').html('');
@@ -139,14 +139,22 @@ $('#search-button').on("click", function (event) {
     getCurrentWeather(event);
 });
 
-$('#city-results').on("click", function(event) {
+$('#city-results').on("click", function (event) {
     event.preventDefault();
     $('#search-city').val(event.target.textContent);
     currentCity = $('#search-city').val();
     getCurrentWeather(event);
 });
 
-$('#clear-storage').on("click", function(event){
+$('#clear-storage').on("click", function (event) {
     localStorage.clear();
     pullCities();
-}) 
+});
+
+var runScript = function () {
+    getUrlPar();
+    renderCities();
+    getCurrentWeather();
+};
+
+runScript();
