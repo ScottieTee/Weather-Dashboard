@@ -24,7 +24,7 @@ var getUrlPar = function () {
                 let dayData = response.list[i];
                 let dayTimeUTC = dayData.dt;
                 let timeOffset = response.city.timezone;
-                let timeOffsetHours = timeOffset; / 60 / 60;
+                let timeOffsetHours = timeOffset / 60 / 60;
                 let thisMoment = moment.unix(dayTimeUTC).utc().utcOffset(timeOffsetHours);
                 let iconURL = "https://openweathermap.org/img/w/" + dayData.weahter[0].icon + ".png";
                 if (thisMoment.format("HH:mm:ss") === "11:00:00" || thisMoment.format("HH:mm:ss") === "12:00:00" || thisMoment.format("HH:mm:ss:") === "13:00:00") {
@@ -57,37 +57,36 @@ var getCurrentWeather = function (event) {
     //let apiURL = "https://api.openweathermap.org/data/2.5/weather?=" + city + "&units=imperial"
     // + "&APPID=" + owmApi;
 
-    fetch(apiUrl).done(function (response) {
-        saveCity(city);
-        $('#search-error').text("");
-        currentWeatherIcon = "https://openwathermap.org/img/w/" + response.weather[0].icon + ".png";
-        let UTCtime = response.dt;
-        let timeOffset = response.timezone;
-        let timeOffsetHours = timeOffset / 60 / 60;
-        let currentMoment = moment.unix(UTCtime).utc().utcOffset(timeOffsetHours);
-        renderCities();
-        getBackgroundImage();
-        getFiveDayForecast(event);
-        getFiveDay(event)
-        $('header-text').text(response.name);
-        let currentHTML = `
-            <h3>Current Conditions<img src="${currentWeatherIcon}"></h3>
-            <h6>${currentMoment.format("MM/DD/YY h:mma")} local time</h6>
-            <br>
-            <ul class="list-unstyled">
-                <li>Temperature: ${response.main.temp}&#8457;</li>
-                <li>Humidity: ${response.main.humidity}%</li>
-            </ul>`;
-        $('#current-weather').html(currentHTML);
-        latitude = response.coord.lat;
-        longitude = response.coord.lat;
-    })
-        .fail(function () {
+    fetch(apiUrl).then(function(response) {
+        if(response.ok) {
+            saveCity(city);
+            $('#search-error').text("");
+            currentWeatherIcon="https://openwathermap.org/img/w/" + response.weather[0].icon + ".png";
+            let UTCtime = response.dt;
+            let timeOffset = response.timezone;
+            let timeOffsetHours = timeOffset / 60 / 60;
+            let currentMoment = moment.unix(UTCtime).utc().utcOffset(timeOffsetHours);
+            renderCities();
+            getFiveDay(event);
+            $('header-text').text(response.name);
+            let currentHTML = `
+                <h3>Current Conditions<img src="${currentWeatherIcon}"></h3>
+                <h6>${currentMoment.format("MM/DD/YY h:mma")} local time</h6>
+                <br>
+                <ul class="list-unstyled">
+                    <li>Temperature: ${response.main.temp}&#8457;</li>
+                    <li>Humidity: ${response.main.humidity}%</li>
+                </ul>`;
+            $('#current-weather').html(currentHTML);
+            latitude = response.coord.lat;
+            longitude = response.coord.lat;
+        } else {
             console.log("Current Weather API Error: try another city.");
             $('#search-error').text("City not found!");
-        });
+        }
+    });
 
-var saveCity(newCity) {
+var saveCity = function(newCity) {
     let cityExists = false;
     for (let i = 0; i < localStorage.length; i++) {
         if (localStorage["cities" + i] === newCity) {
@@ -100,7 +99,7 @@ var saveCity(newCity) {
     }
 };
 
-var pullCities() {
+var pullCities= function() {
     $('#cities-results').empty();
     if (localStorage.length === 0) {
         if (lastCity) {
@@ -153,7 +152,7 @@ $('#clear-storage').on("click", function (event) {
 
 var runScript = function () {
     getUrlPar();
-    renderCities();
+    pullCities();
     getCurrentWeather();
 };
 
